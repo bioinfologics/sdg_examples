@@ -4,4 +4,4 @@
 
 ### Walkthroughs
 
-The [SDG First Steps Walkthrough] is a great place to start.
+The [SDG First Steps Walkthrough](first_steps.md) is a great place to start.
