@@ -18,7 +18,7 @@ sdg-datastore make -t long -o ecoli_pb -L ../ecoli_pb_all.fastq
 sdg-dbg -p ecoli_pe.prseq -o ecoli_assm
 ```
 
-From this point on, we use the python SDG library. First, we load the workspace, add a long read datastore, and the long reads datastore, and map its reads using a k=11 index:
+From this point on, we use the python SDG library. First, we load the workspace, add a long read datastore and map its reads using a k=11 index:
 
 ```python
 import pysdg as SDG
@@ -30,7 +30,7 @@ lords.mapper.k=11
 lords.mapper.map_reads()
 ```
 
-We can check how the initial graph looks like by dumping it to a [GFAv1](https://github.com/GFA-spec/GFA-spec/blob/master/GFA1.md) file and opening it in [Bandage](https://rrwick.github.io/Bandage/):
+We can check what the initial graph looks like by dumping it to a [GFAv1](https://github.com/GFA-spec/GFA-spec/blob/master/GFA1.md) file and opening it in [Bandage](https://rrwick.github.io/Bandage/):
 
 ```python
 ws.sdg.write_to_gfa1('initial_graph.gfa')
@@ -38,7 +38,7 @@ ws.sdg.write_to_gfa1('initial_graph.gfa')
 
 ![Bandage_initial_graph](initial.png)
 
-Now we can use the LinkageMaker to create linkage with the long reads datastore. We do this by selecting the nodes between which to analyse posible linkage, in this case all nodes of 1100bp or more, and then calling the make_longreads_multilinkage method, setting alignment filtering parameters of 1000bp and 10% id:
+Now we can use the LinkageMaker to create linkage using the long reads datastore. We do this by selecting the nodes between which to analyse posible linkage, in this case all nodes of 1100bp or more, and then calling the make_longreads_multilinkage method, setting alignment filtering parameters of 1000bp and 10% id:
 
 ```python
 lm=SDG.LinkageMaker(ws.sdg)
@@ -118,7 +118,7 @@ lu.select_by_size(1100)
 ns_dg=lu.make_nextselected_linkage()
 ```
 
-Now the links on the same node look quite simpler:
+Now the links on the same node look much simpler:
 
 ```python
 node3=ns_dg.get_nodeview(3)
@@ -131,7 +131,7 @@ NEXT:  < NodeDistanceView: -61bp to -596 >
 PREV:  < NodeDistanceView: 1145bp to 323 >
 ```
 
-If we plot this new distance graph with the collapsed linkage, it is quite a bit more resolved already:
+If we plot this new distance graph with the collapsed linkage, we can see it is quite a bit more resolved:
 
 ```python
 ns_dg.write_to_gfa1('ns_collapsed.gfa')
@@ -139,7 +139,7 @@ ns_dg.write_to_gfa1('ns_collapsed.gfa')
 
 ![Bandage_ns_graph](ns_collapsed.png)
 
-But we can still solve this more by getting rid of those repetitions. It is easy to find some posible repetitive nodes in a simple graph like this: they will be connected to multiple neighbours, as each of them belongs in more than one place. There can be some sections in the middle of a repetition that have only one neighbour fw and back, but on this simple genome that is not the case. A simple exploration of the NodeViews for the graph can give us the detail:
+But we can improve this further by getting rid of those repetitions. It is easy to find some possible repetitive nodes in a simple graph like this: they will be connected to multiple neighbours, as each of them belongs in more than one place. There can be some sections in the middle of a repetition that have only one neighbour forwards and backwards, but in this simple genome that is not the case. A simple exploration of the NodeViews for the graph can show us more detail:
 
 ```python
 for nv in ns_dg.get_all_nodeviews():
@@ -175,7 +175,7 @@ node 1542 (1255 bp) is a repeat:
 
 
 
-But rather than just checking how they look, we can deselect the nodes in the LinkageUntangler (by turning its position in the selection vector off), and generate the linkage again. This should generate long links  between the adjacent nodes, effectively skipping over these repeats which are only around 1Kbp each, assuming there are actually reads that span the repeats:
+But rather than just checking how the repeat nodes look, we can deselect them in the LinkageUntangler (by turning their positions in the selected_nodes vector off), and generate the linkage again. This should generate long links between the adjacent nodes, effectively skipping over these repeats which are only around 1Kbp each, assuming there are actually reads that span the repeats:
 
 ```python
 for nv in ns_dg.get_all_nodeviews():
@@ -184,7 +184,7 @@ for nv in ns_dg.get_all_nodeviews():
 ns_nr_dg=lu.make_nextselected_linkage()
 ```
 
-It is interesting to check, as an example, what happen to node 1274 (the first one entering the second repeat):
+It is interesting to check, as an example, what happens to node 1274 (the first one entering the second repeat):
 
 ```python
 node1490=ns_nr_dg.get_nodeview(1274)
@@ -197,7 +197,7 @@ NEXT:  < NodeDistanceView: 1177bp to 827 >
 PREV:  < NodeDistanceView: 862bp to 229 >
 ```
 
-The connectio to the repeat is not there anymore, and a direct connection to node 827 has replaced that, leaving a repeat-size gap in.
+The connection to the repeat is not there anymore, and a direct connection to node 827 has replaced that, leaving a repeat-size gap in.
 
 This new graph now will have a familiar topology:
 
