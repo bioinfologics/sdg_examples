@@ -1,4 +1,6 @@
-# Workspace
+# SDG first steps walkthrough
+
+## Workspace
 
 The workspace is the foundation of bsg, a workspace contains everything you need to assemble a genome. To create a workspace from scratch, first import bsg from the installation directory
 
@@ -36,7 +38,7 @@ Now restored_ws contains all the same elements as ws.
 
 Please note that some of the components that are derived from the data ( like graph kmer indexes) are not persisted in the session and need to be recomputed after loading the workspace from disk.
 
-#### ws.sg
+### ws.sg
 
 Next we need to add a graph as the base for the rest of the information, bsg as the name implies is graph based, so the graph is the 
 
