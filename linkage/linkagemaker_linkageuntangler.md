@@ -184,7 +184,7 @@ for nv in ns_dg.get_all_nodeviews():
 ns_nr_dg=lu.make_nextselected_linkage()
 ```
 
-It is interesting to check, as an example, what happen to node 1274 (the first one entering the first repeat):
+It is interesting to check, as an example, what happen to node 1274 (the first one entering the second repeat):
 
 ```python
 node1490=ns_nr_dg.get_nodeview(1274)
@@ -197,7 +197,7 @@ NEXT:  < NodeDistanceView: 1177bp to 827 >
 PREV:  < NodeDistanceView: 862bp to 229 >
 ```
 
-
+The connectio to the repeat is not there anymore, and a direct connection to node 827 has replaced that, leaving a repeat-size gap in.
 
 This new graph now will have a familiar topology:
 
