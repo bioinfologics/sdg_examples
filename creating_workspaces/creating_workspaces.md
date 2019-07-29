@@ -39,7 +39,7 @@ Now we will create an SDG workspace from the final ABySS file, add the paired an
 
 ```shell
 sdg-workspace make -g ecoli_abyss-8.gfa2 -p ecoli_pe.prseq -L ecoli_pb.loseq -o sdg_ecoli_abyss
-sdg-kmercounter make -w sdg_ecoli_abyss.sdgws -o sdg_ecoli_abyss_kcounts -d ecoli_pe.prseq -n
+sdg-kmercounter make -w sdg_ecoli_abyss.sdgws -o sdg_ecoli_abyss_kcounts -d ecoli_pe.prseq -n PE
 sdg-workspace add_counter -w sdg_ecoli_abyss.sdgws -n kcounts -c sdg_ecoli_abyss_kcounts.sdgkc -o sdg_ecoli_abyss
 
 ```
