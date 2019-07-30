@@ -1,6 +1,16 @@
 ## Sequence Distance Graph examples
 
- [SDG on Github](https://github.com/bioinfologics/sdg)
+This page contains examples for the  [Sequence Distance Graph framework](https://github.com/bioinfologics/sdg).
+
+
+
+### Datasets
+
+All the datasets used on these examples are described on the [datasets](datasets/datasets.md) page.
+
+### Basic tasks
+
+The first thing you will need to use SDG is to [create a WorkSpace](creating_workspaces/creating_workspaces.md).
 
 ### Walkthroughs
 
