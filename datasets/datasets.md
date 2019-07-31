@@ -1,8 +1,12 @@
 # SDG example datasets
 
-Al along the different examples presented on this pages, several datasets are being used. Since the same datasets are used on all pages, we describe them all on this single place.
+This is a list of all the datasets used on the examples.
 
-# *E. coli* paired-end and PacBio
+## *E. coli* paired-end and PacBio
 
 This dataset, available can be downloaded on [https://opendata.earlham.ac.uk](https://opendata.earlham.ac.uk).
+
+## PseudoSeq.jl trio dataset
+
+This dataset represents a simple simulation of a trio sequencing experiment.
 
