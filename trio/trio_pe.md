@@ -84,21 +84,78 @@ plot_kcov(bubble_nvs[1])
 
 ### Reconstructing a "uni-parental" path
 
-To construct a Phased-contig from a single parent origin, we can follow a simple algorithm:
+To construct a Phased-contig from a single parent origin, we can follow a simple idea algorithm:
+1. Start with a path with only one node, present in the parent (i.e. it's k-mers coverede by it).
+2. While there is only one node forward covered by the parent, add it to the path, and repeat.
+3. Once there are no more nodes forward, or more than one node forward is covered by the parent, reverse the path, so the last node is the initial node but in oposite direction.
+4. While there is only one node forward covered by the parent, add it to the path, and repeat.
+5. Reverse the path again, for it to be in the same orientation of the starting node.
 
-1) Start at a any contig that is haplotype-specific contig, and check which parent fully covers it, we will call this the target parent.
+In python, this can be done with this function:
+```python
+def extend_parent_covered_path(starting_node,target_parent):
+  if ws.sdg.get_nodeview(starting_node).kmer_coverage("main",target_parent).count(0)!=0:
+    return SDG.SequenceDistanceGraphPath(ws.sdg,[])
+  p=SDG.SequenceDistanceGraphPath(ws.sdg,[starting_node])
+  for x in [0,1]:
+    nv=ws.sdg.get_nodeview(p.nodes[-1])
+    while nv.next():
+      next_node=0
+      for nl in nv.next():
+        if nl.node().kmer_coverage("main",target_parent).count(0)==0:
+          if next_node or nl.node().node_id() in p.nodes:
+            next_node=0
+            break
+          else:
+            next_node=nl.node().node_id()
+      if next_node==0: break
+      p.nodes.append(next_node)
+      nv=ws.sdg.get_nodeview(next_node)
+    p.reverse()
+    return p
+```
 
-2) Advance through the graph (fordard and backward) as long as:
-
-​	a) We have not reached a node we already included (to break cycles)
-
-​	b) There is a single adjacent node, which is covered by both parents. In which case we advance to it.
-
-​	c) There are two adjacent nodes, of which one is fully covered by the target parent but not by the non-target parent, and the other is fully covered by the non-target parent and not by the target parent. In which case we advance to the node covered by the target parent.
 
 
+Interestingly, going back to the bubble between nodes 11414 and 4775 and extending their paths along their respective parents of sequence origin will return paths of different length:
+
+```python
+path1=extend_parent_covered_path(11414,"p1")
+path2=extend_parent_covered_path(4775,"p2")
+print(len(path1.sequence()),len(path2.sequence()))
+
+```
+
+```
+7923 16453
+```
 
 
 
+This actually makes sense if we remember we are not "phasing bubbles" but following unique paths of coverage. The path of the parent "p1" clearly has some repeat, tip or other complication which does not affect the path of "p2".
+
+As a final check, we can make sure each path is covered by the appropriate parent, by repurposing the k-mer coverage plot function to plot coverage of sequences rather than nodes:
+
+```python
+def plot_seq_kcov(seq):
+    figure();suptitle("Coverage for a sequence of %dbp"%len(seq));
+    subplot(3,1,1);ylim((0,120))
+    plot(ws.get_kmer_counter("main").project_count("PE",seq),label="child");legend(loc=1);
+    subplot(3,1,2);ylim((0,120))
+    plot(ws.get_kmer_counter("main").project_count("p1",seq),"red",label="parent 1");legend(loc=1);
+    subplot(3,1,3);ylim((0,120))
+    plot(ws.get_kmer_counter("main").project_count("p2",seq),"blue",label="parent 2");legend(loc=1);
+
+plot_seq_kcov(path1.sequence())
+plot_seq_kcov(path2.sequence())
+```
 
 
+
+![](path_1_kcov.png)
+
+![](path_2_kcov.png)
+
+
+
+And this concludes, this example. The rest, as usually said, is left as an excercise to the reader.
