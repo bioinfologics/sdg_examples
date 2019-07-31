@@ -2,13 +2,15 @@
 
 ## Workspace
 
-The workspace is the foundation of bsg, a workspace contains everything you need to assemble a genome. To create a workspace from scratch, first import bsg from the installation directory
+The workspace is the container of a project, contains everything needed work with a  genome. 
+
+To create a workspace from scratch, first import pysdg.
 
 ```python
 import pysdg as SDG
 ```
 
-then simply instanciate the `WorkSpace()` class. 
+instanciate a `WorkSpace()` and save the instance in a variable.
 
 ```python
 ws = SDG.WorkSpace()
@@ -16,44 +18,169 @@ ws = SDG.WorkSpace()
 
 This is the the object where everything is going to be stored, the different components of the workspace can be accessed using dot notation.
 
-The main components of the workspace are the graph (ws.sg), the counted kmers object (ws.kci) and the datastores and mappers (ws.)
+The main components of the workspace are the graph (ws.sdg), the datastores with their corresponding mappers and the KmerCounters (ws.kci) and most frequently all this data is accessed usgin NodeViews().
 
-![image-20181109112347970](/Users/ggarcia/Library/Application Support/typora-user-images/image-20181109112347970.png)
+![image-20190730114736552](./workspace-diagram.png)
 
 a workspace can be saved to disk and loaded from disk, this allows to preserve the sessions. See (functions to dump and restore to disk). In bsg the processes that are applied to a workspace and it's component live in memory, so if you want to persist the work that you have done in your graph you'll need to save a copy of the workspace to the disk, this can be done using.
 
 ```python
->>> ws.dump_to_disk("./persisted_workspece.bsgws")
+>>> ws.dump_to_disk("./persisted_workspece.sdgws")
 ```
 
 and the session can be restored by loading the workspace instead of rebuilding it from scratch every time
 
-```
+```python
 ## Create a new Workspace
 >>> restored_ws = bsg.WorkSpace()
->>> restored_ws.load_from_disk("./persisted_workspece.bsgws")
+>>> restored_ws.load_from_disk("./persisted_workspece.sdgws")
 ```
 
 Now restored_ws contains all the same elements as ws. 
 
 Please note that some of the components that are derived from the data ( like graph kmer indexes) are not persisted in the session and need to be recomputed after loading the workspace from disk.
 
-### ws.sg
+### ws.sdg
 
-Next we need to add a graph as the base for the rest of the information, bsg as the name implies is graph based, so the graph is the 
-
-in bsg sequences are stored in their canonical form in the nodes. Links store the topological relation between nodes:
+sdg as the name implies is graph based, each workspace has a main graph where all the data is referenced to. sdg has to types of graphs sequence digraphs (sdg) and distance graphs (dg). Sequence digraphs are composed of nodes and edges, the nodes store the sequences and the edges represent distances between nodes (distance is the d in sdg). Negative distances indicate overlap and positive distances indicate N gaps. SDG sequences are stored in their canonical form in the nodes. Distance graphs (dg) only store distances (links) and a reference to the nodes in the main sdg, this type of graph is used to store the results of calculations.
 
 ![image-20181107213601519](/Users/ggarcia/Library/Application Support/typora-user-images/image-20181107213601519.png)
 
 
-To import a graph in an empty workspace you can load it directly from a gfa v1.0 graph:
+
+To import a graph in an empty workspace you can load it directly from a gfa file:
 
 ```python
->>> ws.sg.load_from_gfa('./graph.gfa')
+>>> ws.sdg.load_from_gfa('./graph.gfa')
 ```
 
-Once the graph is loaded all the informatino can be accessed accessing the graph in the workspace via dot notation. The nodes are stored inside the graph in a vector of Node objects, nodes start from index 1, index 0 is reserved for the NULL node. The same is valid for the links, links[0] is reserved for the null link.
+Once the graph is loaded all the information can be accessed directly from the `workspace` using dot notation or better using `Nodeviws()` to access the information from the perspective of a node. 
+
+Now that the main graph is in the workspace other data can be ingested by the workspace. SDG supports generic datatypes like paired reads, long reads and linked reads. 
+
+Raw data is converted to DataStores, this is done so SDG can store an indexed version of the data in disk. This allows the framework to have quick access to the entire dataset without the need to have the entire dataset in memory, the result is that workspaces can be bigger than the available ram. Datastores are type specific, each available data type is stored according to it's main characteristic.
+
+Datastores can be created using the python API or the command line utilities. For example, to create a paired end datastore using the API.
+
+```python
+>>> SDG.PairedReadsDatastore_build_from_fastq("prds.prds", "./pe-reads_R1.fastq", "./pe-reads_R2.fastq", "pe_reads")
+```
+
+the `.PairedReadsDatastore_build_from_fastq()` method created a paired read datastore form fastq files and stores the datastore in the disk ready to be attached to a workspace.
+
+```python
+>>> ws.add_paired_reads_datastore("./prds.prds", "PE")
+```
+
+`.add_paired_reads_datastore()` attaches the datastore to the workspace and names it `pe` in this case. now the dataset is attached to the workspace. The attached datastores can be listed using the .`list_<datatype>_datastores()` method, in this case:
+
+```python
+>> ws.list_paired_reads_datastores()
+('PE',)
+```
+
+an alternative way of creating datastores is using the command line interfase, in this case `sdg-datastore` 
+
+```bash
+$ sdg-datastore make -t paired -o cli-prds.prds -1 ./pe-reads_R1.fastq -2 ./pe-reads_R2.fastq
+```
+
+this will create a datastore that can be attached in the same way as  to the ws
+
+```python
+>>> ws.add_paired_reads_datastore("./cli-prds.prds", "cli-PE")
+>>> ws.list_paired_reads_datastores()
+('PE', 'cli-PE',)
+```
+
+in a similar way linked reads, long reads datastores and kmer counters can be attached to the workspace 
+
+```python
+## Create linked reads ds and attach it to the ws
+>>> SDG.LinkedReadsDatastore_build_from_fastq("./lirds.lirds", "li_reads", "./child/child-link-reads_R1.fastq.gz", "./child/child-link-reads_R2.fastq.gz", SDG.LinkedReadsFormat_raw, readsize=250, chunksize=10000000)
+>>> ws.add_linked_reads_datastore("./lirds.lirds", "LI")
+>>> ws.list_linked_reads_datastores()
+('LI',)
+
+## Create long reads ds and attach it to the ws
+>>> SDG.LongReadsDatastore.build_from_fastq("./lords.lords", "longreads_pe", "./child/child-long-reads.fastq")
+>>> ws.add_long_reads_datastore('./lords.lords', 'LO')
+>>> ws.list_long_reads_datastores()
+('LO',)
+
+## Create kmer counter collection in the ws
+>>> ws.add_kmer_counter("kmers-PE-k27", 27)
+>>> ws.get_kmer_counter("kmers-PE-k27").add_count("PE", ["./pe-reads_R1.fastq", "./pe-reads_R2.fastq"])
+>>> ws.list_kmer_counters()
+('kmers-PE-k27', )
+>>> ws.get_kmer_counter("kmers_noncanonical").list_names()
+("PE",)
+```
+
+now all data is attacched to the workspace and can be usad from within. 
+
+The next thing to do is to indicate SDG how the data in the datastores related to the graph, this is how we want to map the data from the datastores in the nodes. 
+
+Each datastore in the ws gets a mapper object within, the mapper is used to map the data to the nodes of the graph. 
+
+The mapper is in charge of mapping the data back to the nodes, the result of a mapping the data is a set of `Mappings` or a collection of 
+
+Each data type has a particular way of mapping the data back to the node and produces different mappings. For example to map long reads from the datastore:
+
+```python
+## set the mapper k to 15
+ws.get_long_reads_datastore("long_pe").mapper.k=15
+## execute the read mapping
+ws.get_long_reads_datastore("long_pe").mapper.map_reads()
+```
+
+alternatively a pointer to the mapper can be constructed to make the code more readable, the mapper is pointed by the variable but is still contained within the datastore in the mapper.
+
+```python
+## pointer to the long read mapper
+lorm = ws.get_long_reads_datastore("long_pe").mapper
+
+## set k and map the reads
+lorm.mapper.k=15
+lorm.map_reads()
+```
+
+the resulting mappings are stared inside the mapper in the datastore, for example if you want to check wich nodes were mapped to the 1000th read you can user the `get_raw-mappings_from_read()` function but the best way to access the mappings is using `NodeViews` (see next section).
+
+```python
+>>> for m in lorm.get_raw_mappings_from_read(1000):
+>>> .... print (m)
+LongReadMapping 1000 (0:8302) -> -429 (5451:13753)  1169 hits
+LongReadMapping 1000 (8530:14690) -> -4990 (190:6340)  963 hits
+LongReadMapping 1000 (15831:20460) -> 2904 (8:4637)  611 hits
+LongReadMapping 1000 (24032:25491) -> -4169 (14:1473)  213 hits
+LongReadMapping 1000 (24032:25491) -> -2393 (14:1473)  259 hits
+LongReadMapping 1000 (27748:29666) -> 2983 (21:1939)  240 hits
+LongReadMapping 1000 (29531:30795) -> 4596 (12:1276)  215 hits
+LongReadMapping 1000 (29531:30795) -> 4773 (12:1276)  127 hits
+```
+
+The same mappings can be applied to the rest of the datastores
+
+```python
+## Map the rest of the ds in the workspace
+>>> ws.get_paired_reads_datastore("PE").mapper.map_reads()
+>>> ws.get_linked_reads_datastore("LI").mapper.map_reads()
+```
+
+Now that all the data is atteched to the ws and the reads alre mapped it is a good time to save the workspace.
+
+```python
+ws.dump_to_disk("./persisted.reads.mapped.sdgws")
+```
+
+Now all the work is stored in disk and can be loaded when needed.
+
+
+
+### NodeViews
+
+NodeViews are used to access the workspace data from a node perspective, using nodeviews you can access node properties, navigate the graph, access datastores and mappings. 
 
 ```
 >>> print("Number of nodes: %s" %(len(ws.sg.nodes)))
