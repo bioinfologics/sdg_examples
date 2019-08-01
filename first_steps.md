@@ -180,122 +180,89 @@ Now all the work is stored in disk and can be loaded when needed.
 
 ### NodeViews
 
-NodeViews are used to access the workspace data from a node perspective, using nodeviews you can access node properties, navigate the graph, access datastores and mappings. 
-
-```
->>> print("Number of nodes: %s" %(len(ws.sg.nodes)))
->>> print("Number of links: %s" %(sum([len(ws.sg.links[n]) for n in range(1, len(ws.sg.nodes))]), ))
-Number of nodes: 964121
-Number of links: 2826446
-```
-
-
-Information in the nodes and links can also be accessed using dot notation ( for more information about the methods and attributes check the [Node](https://bioinfologics.github.io/bsg/class_node.html) and [Link](https://bioinfologics.github.io/bsg/class_link.html) documentation), for example if you need to acess the sequence of some nodes:
+NodeViews are used to access the workspace data from a node perspective, to create a nodeview of the 10th node of the main sdg graph in the workspace:
 
 ```python
->>> for node in ws.sg.nodes[:10]:
->>>     print(node.sequence)
-
-GATTCTCAATTAACAAAATTAAAAATAAAATATATTCAAATTAAAATAAAATACTGGCTCCTGTTTCTCACTCTGTTCCTCCGATCTTATTTTAATTAATTAAAAAAAATAATTAATTCTTAATTCTAATTAAAGGGGGAATTCAAGAATTCCCTTAATTCAAGAAGAATTCCCCTTTGAATTCCCCAAGGAGAATATTA
-AAAGTTAACTGTTAACTTTGTTCAAACAAAGAATAGCTTGCTAATCCCCCCCCCCTATTTCTTACCCAACTCTGTTGCAACATCATCGATGATTATGGCTTGGAAATAGAGTGTTCTCATTGTCATACCTCATATTCATCTTCATCTTCATGCCATTTGGTACCCCGTCTTAACGGTTTATCCGTATTCTGTCAAGTAGGATACTCTATTAGAGGAGCGCTTCCTATTTAATCATCCACTCATTGATTTAGTTTCGAT
-CTGCAATTCACCCTGTTTTCCCATTGTTGGGCGACCCAATATAAACAAAATATTAACATTAACATCCTGTGAATGTTATTAAATAATAAGTAATAAATAATATAATCTTCATTAGAATGTATCTACTTAATGTTAGGTTCTTAAAAGCAAGCACTTAAACTATTAAAGTAACACAGGGATGGTTACCCTACTATTAGTTA
-AGTATTAAAAATACTAATTATAATTAAATGAAGTGTGATCCGTTAATAAATAAATATATTAAAATGAGGGTGTTATTCCGTTCAACCAAATTGAGATGAAGTGAGATGAGAATGAGATTAGTCAGAAATCACCAAATATCAACCATTTAACCCCCCTTTCAACATTAACATCCTTAAATTATTTAATTTAAGGATTATAA
-CCCCCCTTGCTTTCGCTTCCCTTCCAACTGCTCTTCACTCACTCACTTAATCAACGTTGATAAGTACAATTAGAATTAATGTGTTTGGTTCAACCATTCCCATCAAAATTACCAACCAACCAACCAACCTACCAACCAACCAACCAACCAACCAACCATCCTCAATTGGATCGAGAAGCGATAACTGCTTTAAATCAGAAATACTCTATTTCTTCAAGACAGCTGGAATA
-ACTCTCCCCAAGTAGTACTCCGTTAAAAATACTCATCATGTCGTGACTGTGTGGACCTATTCTCATATCCCCTCTCATTCGCTTCGATGTCCGCTCTGATGTTTGGTAAACCATAATAAGTAGTAGGATGTTATTAGAATACTTAATAGGTCGCTGCATGTGAGGCGGTAAGATCTACTACCTCATAGTGACATCTGTCC
-CCTCTAGCACAACTAATAGTAATTATGAGCTAGGTAGTTACTCGATAACGGTAAGAGTGACAGGTATGACTGAGGGGGTTGAAGGACCGTTTCCGAGGAGGTATAAACAGTAAGGGTATGAGCGAGAACGTTAAGGAAGCGTTAAGGAGTAGGGGTGGAGGTAGTGGGGGGTTGAATAAGATTTAAGACAGAGAAGTTATAGTATTAGAATCGTAGGTCTTATTTAAGGTAGTGTAGTGTAGTGTAGTGTAGTGTAGTGTAGTGTAGTGTAGTGTAGTGTAGTGTAGTGTAGTGTAGTGTAGTGTGTTTGTAAAATATGGGATAAGGATAGCGATATTATTAGAGATAAGGTTGACACGGTGAGCGAGATAAGGGGTTGTGAGGGTTGTTGAAGTGAGA
-CCTCTCCCCAAGTAGTACTCCGTTAAAAATACTCATCATGTCGTGACTGTGTGGACCTATTCTCATATCCCCTCTCATTCGCTTCGATGTCCGCTCTGATGTTTGGTAAACCATAATAAGTAGTAGGATGTTATTAGAATACTTAATAGGTCGCTGCATGTGAGGCGGTAAGATCTACTACCTCATAGTGACATCTGTCA
-GATAGCATGAATGCTGAAAGTGTAACACAAAAATATGGTCCTTGGCTATTGTATATATATTATCAAGTCTTCCATGACCTTGCCCTGAAGCCAAACTGACTGACTGACTGACTTACCCTGAAGTCCAACTGACTGTGACTCACGTGAATCTCATAGGTAAACGATTGAAACGTTATAAAAAAAAATATAATCCCAGCCCAGAA
+>>> nv = ws.sdg.get_nodeview(10)
 ```
 
+using nodeviews you can access node properties, navigate the graph, access datastores and mappings. For example to see central node properties:
 
-Or if you need to get the 101th node in the collection and check some properties you have to acess the 101th position in the nodes collection of the graph and check if it's sotred in the canonical orientation or not:
+```python
+## Get the node id
+>>> print(nv.node_id())
+10
 
-```
->>> node101 = ws.sg.nodes[101]
->>> print ("Sequence: " %(node101.sequence, ))
-AGTAGGGGGATATAAAGATA ... GTGTTGAAACGCACGCGAGG
+## get the node sequence
+>>> print(nv.sequence())
+'AAAAAAAAAACTGTTAATTTTTTTTTTTACTGATTTACAAATTCCTTGTACCTCTATCTCAGCCCATGCATATATTGGTTGTTTTACTGCTTGATACCACTAGAAACCTCTAGTTGTTTAA'
 
->>> print ("Is canonical: " %(node101.is_canonical(), ))
-True
-```
-
-Most of the collections in the graph are indexed according to the node collection, so the 101th position in the links vector correspondes with the links of the 101th node.
-
-```
->>> print("Number of links in node 101: %s" %(len(ws.sg.links[101]), ))
-Number of links in node 101: 7
-
->>> print(ws.sg.links[101])
-(<-101 -> 192099>, <-101 -> 299295>, <-101 -> 305649>, <-101 -> 648660>, <101 -> 392194>, <101 -> 410676>, <101 -> 865355>)
+## get the node size
+>>> print(nv.size())
+121
 ```
 
+also topology of the graph from the central node perspective, for example, if you want to get the node neighbours
 
-in most cases acessing the links/nodes directly is not necesarry because the graph object has functions to navigate the graph, for example for the 101th node we can get the forward facing links:
+```python
+>>> for n in nv.netx():
+>>> ....print(n)
+<< NodeDistanceView: -60bp to 2 >>
+<< NodeDistanceView: -60bp to -3 >>
 
-```
->>> print("Fowrard links:")
->>> for fwl in ws.sg.get_fw_links(101):
->>>     print(fwl)
-Fowrard links:
--101 -> 192099
--101 -> 299295
--101 -> 305649
--101 -> 648660
-```
-
-Or the backwards facing links:
-
-```
->>> print("Backwards links:")
->>> for bwl in ws.sg.get_bw_links(101):
->>>     print(bwl)
-Backwards links:
-101 -> 392194
-101 -> 410676
-101 -> 865355
+>>> for p in nv.netx():
+>>> ....print(p)
+<< NodeDistanceView: ...bp to ... >>
+<< NodeDistanceView: ...bp to ... >>
 ```
 
+Mappings can also be queried from the node view, 
 
-The same navigation functions are available to traverse the graph using nodes only, so you can check which nodes are in the neighbourhood of the 101th node using:
+```python
+## Get the names of the available linked reads datastore
+>>> ws.list_linked_reads_datastores()
+('LI',)
 
-```
->>> ## Both fw and bw nodes at the same time (neighbours)
->>> for nn in ws.sg.get_neighbour_nodes(101):
->>>     print(nn)
-299295
-192099
-648660
-865355
-392194
-305649
-410676
-```
+## get the id of the first 3 reads mapped to the node
+>>> for m in nv.get_linked_mappings('LI')[:3]:
+>>> ....print(m)
+12576
+23882
+30795
 
-
-An check which nodes are forward from 101th or backwards from 101th:
-
-```
->>> ## Get forward nodes for the 101th node
->>> print ("Forward nodes: ")
->>> for fwn in ws.sg.get_fw_nodes(101):
->>>     print(fwn)
->>> print("")
->>> print ("Backwards nodes: ")
->>> for bwn in ws.sg.get_bw_nodes(101):
->>>     print(bwn)
-Forward nodes:
-192099
-299295
-305649
-648660
-
-Backwards nodes:
-392194
-410676
-865355
+## get the first 3 mappings from the datastore
+>>> for m in nv.get_linked_mappings('LI')[:3]:
+>>> ....print(m)
+<pysdg.pysdg.ReadMapping; proxy of <Swig Object of type 'ReadMapping *' at 0x107bb5f90> >
+<pysdg.pysdg.ReadMapping; proxy of <Swig Object of type 'ReadMapping *' at 0x107bb55d0> >
+<pysdg.pysdg.ReadMapping; proxy of <Swig Object of type 'ReadMapping *' at 0x107bb5f90> >
 ```
 
-This is just a small subset of the available functinos, for a complete reference check the documentation ( https://bioinfologics.github.io/bsg/ )
+mappings contain the information to go from nodes to reads and vice versa, the information inside the mappings can be queried individually
+
+```python
+### Get the first mappings
+>>> mapping = nv.get_linked_mappings('LI')[0]
+## Check the node of the mapping
+>>> mapping.node
+10
+
+## Check the read id
+>>> mapping.read_id
+12576
+
+## Check the first and last mapping position in the node for the mapping
+>>> mapping.first_pos
+641
+>>> mapping.last_pos
+638
+
+## Check the orientation of the mapping (True=opposite to node, False=Same as node)
+>>> mapping.rev
+Out[27]: True
+```
+
+Each data type has a slightly different mapping format.
 
 ## Short reads (kci)
 
