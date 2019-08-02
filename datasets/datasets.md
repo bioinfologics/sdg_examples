@@ -8,5 +8,5 @@ This dataset can be downloaded from [https://opendata.earlham.ac.uk/opendata/dat
 
 ## PseudoSeq.jl trio dataset
 
-This dataset represents a simple simulation of a trio sequencing experiment.
+This dataset represents a simple simulation of a trio sequencing experiment and can be downloaded from https://opendata.earlham.ac.uk/opendata/data/sdg_datasets/trio/.
 
