@@ -13,8 +13,8 @@ In SDG, all these concepts map to analyses of linkage.
 For this example we can create the initial graph and datastores from the sdg-dbg CLI tool:
 
 ```shell
-sdg-datastore make -t paired -o ecoli_pe -1 ../ecoli_pe_r1.fastq -2 ../ecoli_pe_r2.fastq
-sdg-datastore make -t long -o ecoli_pb -L ../ecoli_pb_all.fastq
+sdg-datastore make -t paired -o ecoli_pe -1 ../ecoli_pe_r1.fastq.gz -2 ../ecoli_pe_r2.fastq.gz
+sdg-datastore make -t long -o ecoli_pb -L ../ecoli_pb_all.fastq.gz
 sdg-dbg -p ecoli_pe.prseq -o ecoli_assm
 ```
 
@@ -23,7 +23,7 @@ From this point on, we use the python SDG library. First, we load the workspace,
 ```python
 import pysdg as SDG
 # Load sdg-dbg's workspace from disk, add the pacbio datastore
-ws=SDG.WorkSpace('ecoli_assm.bsgws')
+ws=SDG.WorkSpace('ecoli_assm.sdgws')
 lords=ws.add_long_reads_datastore('ecoli_pb.loseq')
 # Map long reads
 lords.mapper.k=11

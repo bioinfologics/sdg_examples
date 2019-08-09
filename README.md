@@ -1,4 +1,4 @@
-## Sequence Distance Graph examples
+# Sequence Distance Graph examples
 
 This page contains examples for the  [Sequence Distance Graph framework](https://github.com/bioinfologics/sdg).
 
