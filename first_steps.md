@@ -266,194 +266,59 @@ Each data type has a slightly different mapping format.
 
 ## Short reads (kci)
 
-BSG can store the kmer count for the grph Kmers, the count of the graph kmers in the graph are stored in the graph, but also can store the kmer count of the graph kmers in other datasets. For example one important kmer count that is usually counted is the kmer count of each graph kmer in the illumina pcr free data that was used to create the contigs graph. This count is directly related with the number of copies of a particular kmer in the original genome. By comparing the number of times that a kmer appears in the illumina pe dataset en the number of times that that same kmers apperas in the produced graph reveals if the produced assembly captured the correct copy number for the assembled sequence. we call that relation KCI (kmer compression index).
+SDG can be also used to do kmer count operations on the graph, SDG indexes the graph and then counts the kmers in any sequence collection. The data is stored in `KmerCounter` objects and similarly to the datastores can be attached to the workspace.
 
-Kmer counts in the Workspace are stored as KmerCount object vectors over the kmers existing in the graph. First we need to create a kmer index for the graph, this will take the sequences of the nodes, transform that into kmers and store the kmers in a graph kmers hash, at the same time will create a kmer count of the kmers in the graph.
-This can be done as follows:
+> WARNING: To count faster and produce smaller hash files SDG indexes the graph kmers in an internal index and for following data inputs will only consider kmers that are present in the original graph. This is something that should be kept in ming when doing kmer count analysis. If a motif is not represented in the main graph will not be present in any of the counts. 
+>
+> If you want to check the completeness of your graph you can use the [KAT](https://github.com/TGAC/KAT) tool.
 
-```
->>> ws.kci.index_graph()
-```
-this will popuate the `ws.kci.graph_kmers` collection of `KmerCount` this is needed to store the count of the kmers in the graph and to count the other kmer sources as well. Each KmerCount stores a kmer `KmerCount.kmer` and a count `KmerCount.count` of that kmer in the graph.
+To count Kmers first you need to add a `KmerCounter` object with some parameters such as the name of the collection, the k size and if you want to count canonical or non cannonical kmers (for an explanation on canonical kmers go to this [post](https://bioinfologics.github.io/post/2018/09/17/k-mer-counting-part-i-introduction/)) . and then add a count object inside the collection. 
 
-```
->>> ws.kci.graph_kmers[1000].kmer
-19459
->>> ws.kci.graph_kmers[1000].count
-19
-```
+```python
+>>> ws.add_kmer_counter("PEkmers", 21)
+<KmerCounter PEkmers: index with 2266158 21-mers>
+>>> ws.list_kmer_counters()
+('PEkmers',)
 
-Kmer counts for additinoal sources are stored in the `ws.kci.read_counts` vector. The first dimension of this vector is the each of the counted datasets, the second dimension is the the count for all the kmers of the graph in that particular dataset, the kmers keep the same order as in the graph, so the kmer 1001th in the graph Khmers vector is the same as the 1001th kmer in the read_counts vector but with the corresponding count. 
-
-To add a new count to the `ws`, first add an empty container for the new count
-
-```
->>> ws.kci.start_new_count()
+## Count kmers directly from the pe .fastq files
+>>> ws.get_kmer_counter("PEkmers").add_count('pe1', ['./pe-reads_R1.fastq', './pe-reads_R2.fastq'])  
 ```
 
-and then count directly from the fastq file, this will accumulate the count to the last available container, in this case the new empty one.
+now the counts are stored in the `KmerCounter` and can be accessed either via collection name or index
 
-```
->>> strVec = bsg.vectorString(["./pe_10M_R1.fastq","./pe_10M_R2.fastq",])
->>> ws.kci.add_counts_from_file(strVec)
-```
-
-- Accessing the kmer coverage
-
-The count of the kmers in the graph and the kmer collections can be accessed by quering the collection of kmers in the graph and in the reads.
-
-```
->>> kmer_position = 100
->>> print("Kmer sequence: %s" %(ws.kci.graph_kmers[kmer_position].kmer))
->>> print("Freq in the graph: %s" %(ws.kci.graph_kmers[kmer_position].count))
->>> print("Freq in the reads: %s" %(ws.kci.read_counts[0][kmer_position]))
-
-Kmer sequence: 142
-Freq in the graph: 3
-Freq in the reads: 3
+```python
+>>> ws.get_kmer_counter('PEkmers') == ws.kmer_counters[0]
+True
 ```
 
-The kmer count can also be recovered for entire nodes using `ws.kci.compute_node_coverage_profil(<sequence>, , <collection_index>)` this will return the kmer count for each of the kmers in the provided sequence. The function returns 3 vectors of length `sequence_length-K+1`, the first vector is the kmer count for the kmers in the `reads_count[collection_index]` the second vector is the unique kmers profile, that is the kmers that are unique in the graph will have a 1 and the ones that are not unique qill have 0, and the 3rd collection is graph_kmer profile, is the count of the kmer in the graph.
+and the counts inside the collection can also be queried using the KmerCounter object
 
-For example take the kmer coverage profile of the node 7538 from the graph and count the kmers.
+```python
+## List all kmer collections
+>>> ws.get_kmer_counter('PEkmers').list_names()
+('sdg', 'pe1')  
 
-```
->>> nd = ws.sg.nodes[7538]
->>> kmers = [x for x in ws.kci.compute_node_coverage_profile(nd.sequence, 0)]
-
->>> plt.figure(figsize=(20, 5))
->>> plt.plot(kmers[0], 'r')
->>> plt.plot(kmers[1], 'g')
->>> plt.plot(kmers[2], 'b')
->>> plt.legend(["Reads", "Unique", "Graph"])
+## Find count in the library, the assembly
+>>> kmers.project_count("pe1", "AAAAAAAAAAAAAAAAAAAAA")
+(6332,)
 ```
 
-![image-20181121181048236](/Users/ggarcia/Library/Application Support/typora-user-images/image-20181121181048236.png)
+if you want to check the kmer coverage for a node sequence you can
 
-- Calculate KCI
-
-KCI is the kmer count in the reads and divided by the frequency of the first peak so the expressed values now express the expected copy number for the kmers. An average KCI can be calculated for each node by combining the kcis of all nodes.
-
-First compute all the stats for the read kmer collection, this will calculate the mode of the unique content distirbution. The obtained mode can be checked acessing the internal value, it's a good idea to check this value before calculating the KCI for all the nodes.
-
-```
->>> ws.kci.compute_compression_stats()
->>> ws.kci.uniq_mode
-2
+```python
+>>> kmers.project_count("pe1", ws.sdg.get_nodeview(10).sequence())
+(126, 124, 126, 126, 126, 130, 130, 128, 128, 128, 128, 132, 132, 132, 130, 130, 132, 132, 132, 128, 126, 126, 126, 126, 122, 126, 126, 124, 122, 118, 118, 118, 118, 118, 118, 120, 120, 120, 120, 120, 120, 120, 122, 124, 128, 130, 58, 56, 56, 56, 56, 56, 56, 56, 54, 54, 54, 54, 54, 54, 54, 126, 124, 124, 124, 124, 126, 126, 128, 128, 128, 128, 128, 128, 128, 126, 126, 128, 128, 128, 128, 130, 130, 130, 132, 132, 130, 130, 186, 184, 134, 136, 136, 136, 134, 132, 132, 132, 134, 134, 134, 132, 134, 134, 134, 134, 134)
 ```
 
-With this information the KCI for the all the nodes can be calculated
+or directly acessing the count using the nodeview
 
-```
->>> ws.kci.compute_all_nodes_kci()
-```
-
-This finction will calculate the average KCI for all the nodes in the graph and store the results in `ws.kci.nodes_depth`, Only the kmers with graph frequency < 10 are used in the calculation, the max frequency can be changed.
-
-Now the collection `ws.sg.nodes_depth` contains all the KCI values for the nodes in the graph in the same order as in the nodes collections.
-
-To get the distribution of node KCI values a histogram can be created.
-
-```
->>> plt.hist([x for x in ws.kci.nodes_depth], bins=50)
+```python
+>>> nv = ws.sdg.get_nodeview(10)
+>>> print(nv.kmer_coverage('kmers', 'pe1'))
+(126, 124, 126, 126, 126, 130, 130, 128, 128, 128, 128, 132, 132, 132, 130, 130, 132, 132, 132, 128, 126, 126, 126, 126, 122, 126, 126, 124, 122, 118, 118, 118, 118, 118, 118, 120, 120, 120, 120, 120, 120, 120, 122, 124, 128, 130, 58, 56, 56, 56, 56, 56, 56, 56, 54, 54, 54, 54, 54, 54, 54, 126, 124, 124, 124, 124, 126, 126, 128, 128, 128, 128, 128, 128, 128, 126, 126, 128, 128, 128, 128, 130, 130, 130, 132, 132, 130, 130, 186, 184, 134, 136, 136, 136, 134, 132, 132, 132, 134, 134, 134, 132, 134, 134, 134, 134, 134)
 ```
 
-![image-20181121231946478](/Users/ggarcia/Library/Application Support/typora-user-images/image-20181121231946478.png)
+both functions will return the kmer coveragefor the given node.
 
-Nodes with `kci~1` are nodes that corresponde to the heterozygous part of the genome while othre frequencies corresponds to other parts.
-
-## Short reads (mp)
-
-- create datastore
-- add datastore to ws
-- map reads
-- access mappings
-
-## Linked reads
-
-The reads need to be included in the workspace as datastores. To create a datastore we need to create a datastore first and then import that datastore in the workspace and the last step is to map the reads to the graph.
-
-```bash
-## Create datastore Object
-lrds = bsg.LinkedReadsDatastore()
-
-## Import the reads to the datastore
-lrds.build_from_fastq('./subssample_R1.fastq', './subssample_R2.fastq', '10xds.10xds', bsg.LinkedReadsFormat_UCDavis)
-
-## Append the datastore to the current workspace
-ws.getLinkedReadDatastores().append(lrds)
-```
-
-now the datastore is stored in the linked reads collection in the first position, more datastores can be added if necesarry
-
-```
-ws.linked_read_datastores[0]
-```
-
-Next step is to map the reads to the graph, the reads are going to be mapped using a unique Khmers approach, a read is considered mapping if and only if all the reads in the read map uniquely to the same contig. every other case will be discarded by the mapper and the read is going to be marked as non-mapped.
-
-To map the reads first we need to create an index of unique Khmers (this can be done at k-63 as well), then add a read mapper to the workspace and finally call remap_all to remal all read collections in the workspace (this functino will trigger a remap in all datatypes).
-
-```
-ws.create_index()
-ws.create_63mer_index()
-lrm = bsg.LinkedReadMapper(ws.sg, ws.linked_read_datastores[0], ws.uniqueKmerIndex, ws.unique63merIndex)
-ws.getLinkedReadMappers().append(lrm)
-ws.remap_all()
-```
-
-The result of this step is the transformation functions between the rad data and the graph that we are going to need to execute the untangling steps. This collections are 
-
-```
-ws.linked_read_mappers[0].reads_in_node[1]
-```
-
-will give you the reads of the first mapped linked library in the node id 1.
-
-You can also get some qc statistics for the datastore like tag ocupancy (interesting for icing datasets)
-
-```bash
-lrds.dump_tag_occupancy_histogram('tag_ocupancy_histogram.hist')
-```
-
-Also you can get get the tags for a particular read or all reads with a particular tag
-
-```
-lrds.get_read_tag(100001)
-for r in lrds.get_tag_reads(122385086):
-    print(ws.r)
-```
-
-## Long reads
-
-- create datastore
-
-  
-
-  ```bash
-  ## Create datastore Object
-  lrds = bsg.LinkedReadsDatastore()
-  
-  ## Import the reads to the datastore
-  lrds.build_from_fastq('./subssample_R1.fastq', './subssample_R2.fastq', '10xds.10xds', bsg.LinkedReadsFormat_UCDavis)
-  
-  ## Append the datastore to the current workspace
-  ws.getLinkedReadDatastores().append(lrds)
-  ```
-
-  
-
-  
-
-- add datastore to ws
-
-- map reads
-
-- access mappings
-
-## Basic untangling or genome resolution
-
-- select by kci and show the idea of a backbone selectino for haplotype phasing
-- connect the backbones using some data
-- Produce lines, save the graph output, modify the lines to show that can be done.
+For each kmer collection there is also a graph kmer count that represents the count of the kmers in the main graph.
 
