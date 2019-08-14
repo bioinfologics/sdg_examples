@@ -14,9 +14,9 @@ The synthetic genome creation and sequencing package [Pseudoseq.jl](https://gith
 
 Chromosomes 4 and 5 of the reference genome of the yeast strain S288C were used as a template to create a diploid, 2 chromosome genome for each parent. The proportion of heterozygous sites in each parent's genome was set to ~1\%.
 
-Crossing over and recombination between the homologous pairs of chromosomes was simulated by dividing them into an number of chunks of equal base pairs in length, and then swapping those chunks at random. Then, for each homologous pair of chromosomes, the child inherited one chromosome from the first parent at random, and one chromosome from the second parent at random.\\
+Crossing over and recombination between the homologous pairs of chromosomes was simulated by dividing them into an number of chunks of equal base pairs in length, and then swapping those chunks at random. Then, for each homologous pair of chromosomes, the child inherited one chromosome from the first parent at random, and one chromosome from the second parent at random.
 
 These three simulated genomes were then pseudo-sequenced using Pseudoseq.jl, generating simulated read datasets. Simulated paired end reads were generated for each genome, using an average fragment length of 700bp and a read length of 250bp, and an expected coverage of 70x with error rate was set to .1\%.
 
-This dataset can be downloaded from https://opendata.earlham.ac.uk/opendata/data/sdg_datasets/trio/.
+This dataset can be downloaded from [https://opendata.earlham.ac.uk/opendata/data/sdg_datasets/trio/](https://opendata.earlham.ac.uk/opendata/data/sdg_datasets/trio/).
 
