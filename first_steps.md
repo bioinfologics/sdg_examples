@@ -25,15 +25,15 @@ The main components of the workspace are the graph (ws.sdg), the datastores with
 A workspace can be saved to disk and loaded from disk which allows sessions to be preserved. See (functions to dump and restore to disk). In SDG the processes that are applied to a workspace and it's components live in memory, so if you want to persist the work that you have done in your graph you'll need to save a copy of the workspace to the disk, this can be done using.
 
 ```python
->>> ws.dump_to_disk("./persisted_workspece.sdgws")
+>>> ws.dump_to_disk("./persisted_workspace.sdgws")
 ```
 
 and the session can be restored by loading the workspace instead of rebuilding it from scratch every time
 
 ```python
 ## Create a new Workspace
->>> restored_ws = bsg.WorkSpace()
->>> restored_ws.load_from_disk("./persisted_workspece.sdgws")
+>>> restored_ws = sdg.WorkSpace()
+>>> restored_ws.load_from_disk("./persisted_workspace.sdgws")
 ```
 
 Now restored_ws contains all the same elements as ws. 
