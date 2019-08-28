@@ -2,7 +2,7 @@
 
 ## Workspace
 
-The workspace is the container of a project, contains everything needed work with a  genome. 
+The workspace is the container of a project, contains everything needed work with a genome. 
 
 To create a workspace from scratch, first import pysdg.
 
@@ -18,11 +18,11 @@ ws = SDG.WorkSpace()
 
 This is the the object where everything is going to be stored, the different components of the workspace can be accessed using dot notation.
 
-The main components of the workspace are the graph (ws.sdg), the datastores with their corresponding mappers and the KmerCounters (ws.kci) and most frequently all this data is accessed usgin NodeViews().
+The main components of the workspace are the graph (ws.sdg), the datastores with their corresponding mappers and the KmerCounters (ws.kci) and most frequently all this data is accessed using NodeViews().
 
 ![image-20190730114736552](./workspace-diagram.png)
 
-a workspace can be saved to disk and loaded from disk, this allows to preserve the sessions. See (functions to dump and restore to disk). In bsg the processes that are applied to a workspace and it's component live in memory, so if you want to persist the work that you have done in your graph you'll need to save a copy of the workspace to the disk, this can be done using.
+A workspace can be saved to disk and loaded from disk which allows sessions to be preserved. See (functions to dump and restore to disk). In SDG the processes that are applied to a workspace and it's components live in memory, so if you want to persist the work that you have done in your graph you'll need to save a copy of the workspace to the disk, this can be done using.
 
 ```python
 >>> ws.dump_to_disk("./persisted_workspece.sdgws")
@@ -42,23 +42,23 @@ Please note that some of the components that are derived from the data ( like gr
 
 ### ws.sdg
 
-sdg as the name implies is graph based, each workspace has a main graph where all the data is referenced to. sdg has to types of graphs sequence digraphs (sdg) and distance graphs (dg). Sequence digraphs are composed of nodes and edges, the nodes store the sequences and the edges represent distances between nodes (distance is the d in sdg). Negative distances indicate overlap and positive distances indicate N gaps. SDG sequences are stored in their canonical form in the nodes. Distance graphs (dg) only store distances (links) and a reference to the nodes in the main sdg, this type of graph is used to store the results of calculations.
+SDG as the name implies is graph based, each workspace has a main graph where all the data is referenced to. SDG has two types of graphs, sequence digraphs (sdg) and distance graphs (dg). Sequence digraphs are composed of nodes and edges, the nodes store the sequences and the edges represent distances between nodes (distance is the d in sdg). Negative distances indicate overlaps and positive distances indicate N gaps. SDG sequences are stored in their canonical form in the nodes. Distance graphs (dg) only store distances (links) and a reference to the nodes in the main sdg, this type of graph is used to store the results of calculations.
 
 ![image-20181107213601519](/Users/ggarcia/Library/Application Support/typora-user-images/image-20181107213601519.png)
 
 
 
-To import a graph in an empty workspace you can load it directly from a gfa file:
+To import a graph to an empty workspace you can load it directly from a gfa file:
 
 ```python
 >>> ws.sdg.load_from_gfa('./graph.gfa')
 ```
 
-Once the graph is loaded all the information can be accessed directly from the `workspace` using dot notation or better using `Nodeviws()` to access the information from the perspective of a node. 
+Once the graph is loaded, all the information can be accessed directly from the `workspace` using dot notation or better using `Nodeviws()` to access the information from the perspective of a node. 
 
 Now that the main graph is in the workspace other data can be ingested by the workspace. SDG supports generic datatypes like paired reads, long reads and linked reads. 
 
-Raw data is converted to DataStores, this is done so SDG can store an indexed version of the data in disk. This allows the framework to have quick access to the entire dataset without the need to have the entire dataset in memory, the result is that workspaces can be bigger than the available ram. Datastores are type specific, each available data type is stored according to it's main characteristic.
+Raw data is converted to DataStores, this is done so SDG can store an indexed version of the data on disk. This allows the framework to have quick access to the entire dataset without the need to have the entire dataset in memory, the result is that workspaces can be bigger than the available RAM. Datastores are type specific, each available data type is stored according to it's main characteristic.
 
 Datastores can be created using the python API or the command line utilities. For example, to create a paired end datastore using the API.
 
@@ -72,20 +72,20 @@ the `.PairedReadsDatastore_build_from_fastq()` method created a paired read data
 >>> ws.add_paired_reads_datastore("./prds.prds", "PE")
 ```
 
-`.add_paired_reads_datastore()` attaches the datastore to the workspace and names it `pe` in this case. now the dataset is attached to the workspace. The attached datastores can be listed using the .`list_<datatype>_datastores()` method, in this case:
+`.add_paired_reads_datastore()` attaches the datastore to the workspace and names it `pe` in this case. Now the dataset is attached to the workspace. The attached datastores can be listed using the .`list_<datatype>_datastores()` method, in this case:
 
 ```python
 >> ws.list_paired_reads_datastores()
 ('PE',)
 ```
 
-an alternative way of creating datastores is using the command line interfase, in this case `sdg-datastore` 
+an alternative way of creating datastores is using the command line interface, in this case `sdg-datastore` 
 
 ```bash
 $ sdg-datastore make -t paired -o cli-prds.prds -1 ./pe-reads_R1.fastq -2 ./pe-reads_R2.fastq
 ```
 
-this will create a datastore that can be attached in the same way as  to the ws
+this will create a datastore that can be attached in the same way to the workspace
 
 ```python
 >>> ws.add_paired_reads_datastore("./cli-prds.prds", "cli-PE")
@@ -93,7 +93,7 @@ this will create a datastore that can be attached in the same way as  to the ws
 ('PE', 'cli-PE',)
 ```
 
-in a similar way linked reads, long reads datastores and kmer counters can be attached to the workspace 
+in a similar way linked read, long read datastores and kmer counters can be attached to the workspace 
 
 ```python
 ## Create linked reads ds and attach it to the ws
@@ -117,13 +117,13 @@ in a similar way linked reads, long reads datastores and kmer counters can be at
 ("PE",)
 ```
 
-now all data is attacched to the workspace and can be usad from within. 
+Now all data is attacched to the workspace and can be usad from within it. 
 
-The next thing to do is to indicate SDG how the data in the datastores related to the graph, this is how we want to map the data from the datastores in the nodes. 
+The next thing to do is to indicate SDG how the data in the datastores related to the graph, this is how we want to map the data from the datastores to the nodes. 
 
-Each datastore in the ws gets a mapper object within, the mapper is used to map the data to the nodes of the graph. 
+Each datastore in the workspace gets a mapper object within, the mapper is used to map the data to the nodes of the graph. 
 
-The mapper is in charge of mapping the data back to the nodes, the result of a mapping the data is a set of `Mappings` or a collection of 
+The mapper deals with mapping the data back to the nodes, the result of a mapping the data is a collection of `Mappings`. 
 
 Each data type has a particular way of mapping the data back to the node and produces different mappings. For example to map long reads from the datastore:
 
@@ -145,7 +145,7 @@ lorm.mapper.k=15
 lorm.map_reads()
 ```
 
-the resulting mappings are stared inside the mapper in the datastore, for example if you want to check wich nodes were mapped to the 1000th read you can user the `get_raw-mappings_from_read()` function but the best way to access the mappings is using `NodeViews` (see next section).
+the resulting mappings are stored inside the mapper in the datastore, for example if you want to check which nodes were mapped to the 1000th read you can user the `get_raw-mappings_from_read()` function but the best way to access the mappings is using `NodeViews` (see next section).
 
 ```python
 >>> for m in lorm.get_raw_mappings_from_read(1000):
@@ -168,19 +168,19 @@ The same mappings can be applied to the rest of the datastores
 >>> ws.get_linked_reads_datastore("LI").mapper.map_reads()
 ```
 
-Now that all the data is atteched to the ws and the reads alre mapped it is a good time to save the workspace.
+Now that all the data is atteched to the workspace and the reads are mapped it is a good time to save the workspace.
 
 ```python
 ws.dump_to_disk("./persisted.reads.mapped.sdgws")
 ```
 
-Now all the work is stored in disk and can be loaded when needed.
+Now all the previous work is stored on disk and can be loaded when needed.
 
 
 
 ### NodeViews
 
-NodeViews are used to access the workspace data from a node perspective, to create a nodeview of the 10th node of the main sdg graph in the workspace:
+NodeViews are used to access the workspace data from a node perspective, to create a nodeview of the 10th node of the main SDG graph in the workspace:
 
 ```python
 >>> nv = ws.sdg.get_nodeview(10)
@@ -202,7 +202,7 @@ using nodeviews you can access node properties, navigate the graph, access datas
 121
 ```
 
-also topology of the graph from the central node perspective, for example, if you want to get the node neighbours
+You can also query the topology of the graph from the central node perspective, for example, if you want to get the node neighbours
 
 ```python
 >>> for n in nv.netx():
@@ -238,7 +238,7 @@ Mappings can also be queried from the node view,
 <pysdg.pysdg.ReadMapping; proxy of <Swig Object of type 'ReadMapping *' at 0x107bb5f90> >
 ```
 
-mappings contain the information to go from nodes to reads and vice versa, the information inside the mappings can be queried individually
+Mappings contain the information to go from nodes to reads and vice versa, the information inside the mappings can be queried individually
 
 ```python
 ### Get the first mappings
@@ -268,7 +268,7 @@ Each data type has a slightly different mapping format.
 
 SDG can be also used to do kmer count operations on the graph, SDG indexes the graph and then counts the kmers in any sequence collection. The data is stored in `KmerCounter` objects and similarly to the datastores can be attached to the workspace.
 
-> WARNING: To count faster and produce smaller hash files SDG indexes the graph kmers in an internal index and for following data inputs will only consider kmers that are present in the original graph. This is something that should be kept in ming when doing kmer count analysis. If a motif is not represented in the main graph will not be present in any of the counts. 
+> WARNING: To count faster and produce smaller hash files SDG indexes the graph kmers in an internal index and will only consider kmers that are present in the original graph. This is something that should be kept in mind when doing kmer count analysis. If a motif is not represented in the main graph will not be present in any of the counts. 
 >
 > If you want to check the completeness of your graph you can use the [KAT](https://github.com/TGAC/KAT) tool.
 
@@ -284,7 +284,7 @@ To count Kmers first you need to add a `KmerCounter` object with some parameters
 >>> ws.get_kmer_counter("PEkmers").add_count('pe1', ['./pe-reads_R1.fastq', './pe-reads_R2.fastq'])  
 ```
 
-now the counts are stored in the `KmerCounter` and can be accessed either via collection name or index
+Now the counts are stored in the `KmerCounter` and can be accessed either via collection name or index
 
 ```python
 >>> ws.get_kmer_counter('PEkmers') == ws.kmer_counters[0]
@@ -310,7 +310,7 @@ if you want to check the kmer coverage for a node sequence you can
 (126, 124, 126, 126, 126, 130, 130, 128, 128, 128, 128, 132, 132, 132, 130, 130, 132, 132, 132, 128, 126, 126, 126, 126, 122, 126, 126, 124, 122, 118, 118, 118, 118, 118, 118, 120, 120, 120, 120, 120, 120, 120, 122, 124, 128, 130, 58, 56, 56, 56, 56, 56, 56, 56, 54, 54, 54, 54, 54, 54, 54, 126, 124, 124, 124, 124, 126, 126, 128, 128, 128, 128, 128, 128, 128, 126, 126, 128, 128, 128, 128, 130, 130, 130, 132, 132, 130, 130, 186, 184, 134, 136, 136, 136, 134, 132, 132, 132, 134, 134, 134, 132, 134, 134, 134, 134, 134)
 ```
 
-or directly acessing the count using the nodeview
+or by directly acessing the count using the nodeview
 
 ```python
 >>> nv = ws.sdg.get_nodeview(10)
@@ -318,7 +318,7 @@ or directly acessing the count using the nodeview
 (126, 124, 126, 126, 126, 130, 130, 128, 128, 128, 128, 132, 132, 132, 130, 130, 132, 132, 132, 128, 126, 126, 126, 126, 122, 126, 126, 124, 122, 118, 118, 118, 118, 118, 118, 120, 120, 120, 120, 120, 120, 120, 122, 124, 128, 130, 58, 56, 56, 56, 56, 56, 56, 56, 54, 54, 54, 54, 54, 54, 54, 126, 124, 124, 124, 124, 126, 126, 128, 128, 128, 128, 128, 128, 128, 126, 126, 128, 128, 128, 128, 130, 130, 130, 132, 132, 130, 130, 186, 184, 134, 136, 136, 136, 134, 132, 132, 132, 134, 134, 134, 132, 134, 134, 134, 134, 134)
 ```
 
-both functions will return the kmer coveragefor the given node.
+both functions will return the kmer coverage for the given node.
 
 For each kmer collection there is also a graph kmer count that represents the count of the kmers in the main graph.
 
