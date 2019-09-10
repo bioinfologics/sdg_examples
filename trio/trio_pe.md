@@ -112,7 +112,7 @@ def extend_parent_covered_path(starting_node,target_parent):
       p.nodes.append(next_node)
       nv=ws.sdg.get_nodeview(next_node)
     p.reverse()
-    return p
+  return p
 ```
 
 
