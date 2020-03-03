@@ -60,7 +60,7 @@ And we can produce a nice pair of plots with their coverage in the parents and c
 
 ```python
 def plot_kcov(nv):
-    figure();suptitle("Coverage for "+str(nv));
+    figure();subtitle("Coverage for "+str(nv));
     subplot(3,1,1);ylim((0,120))
     plot(nv.kmer_coverage("main","PE"),label="child");legend(loc=1);
     subplot(3,1,2);ylim((0,120))
