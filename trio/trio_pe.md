@@ -24,6 +24,8 @@ sdg-kmercounter add -c main.sdgkc -n p2 -f p2/p2-pe-reads_R1.fastq -f p2/p2-pe-r
 
 ```python
 import pysdg as SDG
+import matplotlib.pylab as plt
+
 ws=SDG.WorkSpace('sdg_child.sdgws')
 print(ws.ls())
 ```
@@ -60,13 +62,13 @@ And we can produce a nice pair of plots with their coverage in the parents and c
 
 ```python
 def plot_kcov(nv):
-    figure();subtitle("Coverage for "+str(nv));
-    subplot(3,1,1);ylim((0,120))
-    plot(nv.kmer_coverage("main","PE"),label="child");legend(loc=1);
-    subplot(3,1,2);ylim((0,120))
-    plot(nv.kmer_coverage("main","p1"),"red",label="parent 1");legend(loc=1);
-    subplot(3,1,3);ylim((0,120))
-    plot(nv.kmer_coverage("main","p2"),"blue",label="parent 2");legend(loc=1);
+    plt.figure();plt.title("Coverage for "+str(nv));
+    plt.subplot(3,1,1);plt.ylim((0,120))
+    plt.plot(nv.kmer_coverage("main","PE"),label="child");plt.legend(loc=1);
+    plt.subplot(3,1,2);plt.ylim((0,120))
+    plt.plot(nv.kmer_coverage("main","p1"),"red",label="parent 1");plt.legend(loc=1);
+    plt.subplot(3,1,3);plt.ylim((0,120))
+    plt.plot(nv.kmer_coverage("main","p2"),"blue",label="parent 2");plt.legend(loc=1);
 
 plot_kcov(bubble_nvs[0])
 plot_kcov(bubble_nvs[1])
@@ -138,13 +140,13 @@ As a final check, we can make sure each path is covered by the appropriate paren
 
 ```python
 def plot_seq_kcov(seq):
-    figure();suptitle("Coverage for a sequence of %dbp"%len(seq));
-    subplot(3,1,1);ylim((0,120))
-    plot(ws.get_kmer_counter("main").project_count("PE",seq),label="child");legend(loc=1);
-    subplot(3,1,2);ylim((0,120))
-    plot(ws.get_kmer_counter("main").project_count("p1",seq),"red",label="parent 1");legend(loc=1);
-    subplot(3,1,3);ylim((0,120))
-    plot(ws.get_kmer_counter("main").project_count("p2",seq),"blue",label="parent 2");legend(loc=1);
+    plt.figure();plt.title("Coverage for a sequence of %dbp"%len(seq));
+    plt.subplot(3,1,1);plt.ylim((0,120))
+    plt.plot(ws.get_kmer_counter("main").project_count("PE",seq),label="child");plt.legend(loc=1);
+    plt.subplot(3,1,2);plt.ylim((0,120))
+    plt.plot(ws.get_kmer_counter("main").project_count("p1",seq),"red",label="parent 1");plt.legend(loc=1);
+    plt.subplot(3,1,3);plt.ylim((0,120))
+    plt.plot(ws.get_kmer_counter("main").project_count("p2",seq),"blue",label="parent 2");plt.legend(loc=1);
 
 plot_seq_kcov(path1.sequence())
 plot_seq_kcov(path2.sequence())
